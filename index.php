@@ -1,6 +1,6 @@
 <?php
 require 'config.php';
-$rota = $_GET['rota'] ?? 'Conn_criarSchema';
+$rota = $_GET['rota'] ?? 'Login_login';
 $segmentos = explode('_', $rota);
 $nomeControle = $segmentos[0];
 $metodo = $segmentos[1];

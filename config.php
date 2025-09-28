@@ -27,49 +27,46 @@ class Conn {
 
     private static $pdo;
 
-    public static function criarSchema() {
+    function criarSchema() {
         try {
             // Conecta sem especificar o banco de dados
             $pdo = new PDO("mysql:host=" . HOST, USER, PASSWORD);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Verifica se o banco 'condominio' existe
-            $stmt = $pdo->query("SHOW DATABASES LIKE 'condominio'");
+            $stmt = $pdo->query("SHOW DATABASES LIKE '" . DBNAME . "'");
             if ($stmt->rowCount() === 0) {
                 // Cria o banco se não existir
-                $pdo->exec("CREATE DATABASE condominio CHARACTER SET utf8mb4 
-                    COLLATE utf8mb4_unicode_ci");
-                $pdo = new PDO("mysql:host=" . HOST . ";dbname=condominio", USER, PASSWORD);
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $pdo->exec("CREATE TABLE `usuarios` (
+                $pdo->exec("CREATE DATABASE " . DBNAME . " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            }
+
+            // Recria a conexão com o banco já selecionado
+            self::$pdo = new PDO("mysql:host=" . HOST . ";dbname=" . DBNAME, USER, PASSWORD);
+            self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Cria a tabela se não existir
+            $stmt = self::$pdo->query("SHOW TABLES LIKE 'usuarios'");
+            if ($stmt->rowCount() === 0) {
+                self::$pdo->exec("CREATE TABLE `usuarios` (
                     `id` int NOT NULL AUTO_INCREMENT,
                     `nome` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
-                    PRIMARY KEY (`id`)) 
-                    ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 
-                    COLLATE=utf8mb4_general_ci;");
-                $pdo->exec("INSERT INTO `usuarios` VALUES (1,'João')");
-                echo "Banco de dados 'condominio' criado com sucesso.";
-            } else {
-                echo "Banco de dados 'condominio' já existe.";
+                    `email` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
+                    `senha` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
+                    `tipo_usuario` varchar(45) COLLATE utf8mb4_general_ci NOT NULL,
+                    `foto_caminho` varchar(45) COLLATE utf8mb4_general_ci,
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;");
             }
         } catch (PDOException $e) {
             die("Erro ao criar o schema: " . $e->getMessage());
         }
     }
 
-    public static function instancia() {
+    static function instancia() {
         if (!self::$pdo) {
             self::$pdo = new PDO("mysql:host=" . HOST . ";dbname=" . DBNAME, USER, PASSWORD);
         }
         return self::$pdo;
-    }
-
-    function delete($sql) {
-        return $this->instancia()->query("DELETE FROM $sql");
-    }
-
-    function insert($sql) {
-        return $this->instancia()->query("INSERT INTO $sql");
     }
 
     function prepare($sql, $params = []) {
@@ -80,18 +77,5 @@ class Conn {
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         }
         return $stmt->rowCount();
-    }
-
-    function select($sql) {
-        $stmt = $this->instancia()->query("SELECT $sql");
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
-    }
-
-    function update($sql) {
-        try {
-            return $this->instancia()->query("UPDATE " . $sql);
-        } catch (PDOException $e) {
-            die("Erro na consulta: " . $e->getMessage());
-        }
     }
 }
