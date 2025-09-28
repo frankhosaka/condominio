@@ -27,7 +27,11 @@ class Login {
                     (new Conn)->prepare("INSERT INTO usuarios 
                         (nome, email, senha, tipo_usuario, foto_caminho) VALUES (?, ?, ?, ?, ?)",
                         [$nome, $email, $senha_hashed, $tipo_usuario, $foto_caminho]);
-                    return header('Location:?rota=Login_login');
+                    $this->mensagem = '
+                        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                        <strong class="font-bold">Cadastro efetuado com sucesso, favor logar</strong>
+                        </div>';
+                    return $this->login();
                 } catch (PDOException $e) {
                     $this->mensagem = '
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
